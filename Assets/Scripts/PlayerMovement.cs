@@ -155,7 +155,13 @@ public class PlayerMovement : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        GameManager gameManager = FindObjectOfType<GameManager>(true); // Находим gameManager здесь
+        GameManager gameManager = FindObjectOfType<GameManager>(); // Не используйте (true), если GameManager не скрытый
+        if (gameManager == null) 
+        {
+            Debug.LogError("GameManager не найден!");
+            return; // Прекращаем выполнение метода, если GameManager не найден
+        }
+
 
         if (other.CompareTag("Enemy1") || other.CompareTag("Obstacle") || (other.CompareTag("Enemy2") && !isSliding))
         {
@@ -164,11 +170,8 @@ public class PlayerMovement : MonoBehaviour
 
         if (other.CompareTag("Coin"))
         {
-            if (gameManager != null) // Проверка на null перед использованием
-            {
-                gameManager.IncreaseScore(1);
-            }
-            other.gameObject.SetActive(false);
+            gameManager.IncreaseScore(1); // Используем найденный gameManager
+            gameManager.objectPool.ReturnObject(other.gameObject); // Тоже используем найденный gameManager
         }
 
         if (other.CompareTag("BulletPickup"))
@@ -179,24 +182,19 @@ public class PlayerMovement : MonoBehaviour
                 shootingScript.AddBullets(10);
             }
 
-            other.gameObject.SetActive(false);
-            if (gameManager != null && gameManager.objectPool != null)
-            {
-                gameManager.objectPool.ReturnObject(other.gameObject);
-            }
-
+            Destroy(other.gameObject); // Уничтожаем BulletPickup
         }
     }
 
     void Die()
     {
-        GameManager gameManager = FindObjectOfType<GameManager>(true);
+        GameManager gameManager = FindObjectOfType<GameManager>(); //  Не используйте (true), если GameManager не скрытый
         if (gameManager != null)
         {
-            gameManager.ResetScore();
+            gameManager.ResetLevelScore(); // Сбрасываем счет уровня
         }
-        PlayerShooting.bulletDamage = 1f; // И здесь
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        PlayerShooting.bulletDamage = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); //  Перезагружаем сцену по имени, а не по индексу
     }
 
     void Update()

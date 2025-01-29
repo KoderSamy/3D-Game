@@ -8,86 +8,68 @@ public class LevelComplete : MonoBehaviour
     public GameObject levelCompleteUI;
     public TextMeshProUGUI coinsText;
     public Button buyPassButton;
+    public Button restartButton;
     public TextMeshProUGUI tooPoorText;
+
 
     void Start()
     {
-        levelCompleteUI.SetActive(false); // Скрываем UI в начале
+        levelCompleteUI.SetActive(false);
     }
 
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            LevelCompleted();
+            LevelCompleted();//-------------------------------------------------------------------------------------
         }
     }
 
     void LevelCompleted()
     {
         levelCompleteUI.SetActive(true);
-        Time.timeScale = 0f; // Пауза игры
+        Time.timeScale = 0f; // Останавливаем игру
 
-        GameManager gameManager = GameObject.FindObjectOfType<GameManager>(true);
-        if (gameManager != null)
+        if (GameManager.Instance != null)
         {
-            coinsText.text = "Собрано " + gameManager.Score + " монет."; // Обновляем текст
+            // Отображаем счет текущего уровня
+            coinsText.text = $"Собрано монет: {GameManager.Instance.score}";
 
-            // Логика отображения/скрытия элементов
-            if (gameManager.score >= 8)
-            {
-                buyPassButton.gameObject.SetActive(true); // Показываем кнопку "Купить проход"
-                tooPoorText.gameObject.SetActive(false);   // Скрываем текст "Вы слишком бедны"
-            }
-            else
-            {
-                buyPassButton.gameObject.SetActive(false);  // Скрываем кнопку
-                tooPoorText.gameObject.SetActive(true);    // Показываем текст
-            }
+            int scoreAfterPurchase = GameManager.Instance.score - 8;
+
+            // Показываем или скрываем кнопку покупки пропуска в зависимости от счета
+            buyPassButton.gameObject.SetActive(scoreAfterPurchase >= 0);
+            tooPoorText.gameObject.SetActive(scoreAfterPurchase < 0);
+
+            restartButton.gameObject.SetActive(true);// -----------------------------------------------------------------
         }
         else
         {
             Debug.LogError("GameManager не найден!");
-            // Возможно, здесь нужно деактивировать UI результатов, если GameManager не найден
-            levelCompleteUI.SetActive(false); 
+            levelCompleteUI.SetActive(false);
         }
     }
 
     public void RestartLevel()
     {
-        Time.timeScale = 1f;
-        GameManager gameManager = GameObject.FindObjectOfType<GameManager>(true);
-        if (gameManager != null)
+        Time.timeScale = 1f; // Возобновляем игру
+        if (GameManager.Instance != null)
         {
-            gameManager.ResetScore();
+            GameManager.Instance.ResetLevelScore(); // Сбрасываем счет уровня
         }
-        PlayerShooting.bulletDamage = 1f; // Сброс урона здесь
+        PlayerShooting.bulletDamage = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void BuyPass()
     {
-        GameManager gameManager = GameObject.FindObjectOfType<GameManager>(true);
-        if (gameManager != null)
-        {
-            gameManager.score -= 8;
-            gameManager.UpdateScoreText();
-
-             int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-            int nextSceneIndex = currentSceneIndex + 1;
-
-           if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
-            {
-                 SceneManager.LoadScene(nextSceneIndex); // Загружаем следующую сцену
-            }
-           else
-           {
-            // Здесь можно добавить логику для последнего уровня (например, загрузить сцену с боссом)
-            Debug.Log("Поздравляем! Вы прошли все уровни!");
-            // Загрузите сцену с боссом или покажите экран победы
-           }
-
-        }
         Time.timeScale = 1f;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.score -= 8; // Вычитаем стоимость пропуска
+            GameManager.Instance.UpdateScoreText(); // Обновляем текст
+
+            GameManager.Instance.LoadNextLevel(); // Переходим на следующий уровень
+        }
     }
 }

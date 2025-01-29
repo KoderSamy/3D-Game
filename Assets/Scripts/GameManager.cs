@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public int score = 0;
+    // public int TotalScore { get; private set; } = 0;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI bulletText;
     public GameObject coinPrefab;
@@ -14,30 +15,27 @@ public class GameManager : MonoBehaviour
     public GameObject fireRatePickupPrefab;
     public ObjectPool objectPool;
     public TextMeshProUGUI damageText;
-    public int Score => score;
 
 
     void Awake()
     {
-        Debug.Log("GameManager.Awake()");
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            // Инициализация ObjectPool ЗДЕСЬ, один раз!
-            objectPool = FindFirstObjectByType<ObjectPool>();
+
+            objectPool = FindObjectOfType<ObjectPool>();
             if (objectPool == null)
             {
-                Debug.LogError("ObjectPool не найден на сцене!");
-            }
-            else
-            {
-                objectPool.Initialize(coinPrefab, coinPrefab.GetComponent<PoolSize>().poolSize);
-                // objectPool.Initialize(bulletPickupPrefab, bulletPickupPrefab.GetComponent<PoolSize>().poolSize);
-                // objectPool.Initialize(fireRatePickupPrefab, fireRatePickupPrefab.GetComponent<PoolSize>().poolSize);
+                GameObject obj = new GameObject("ObjectPooler");
+                objectPool = obj.AddComponent<ObjectPool>();
+                DontDestroyOnLoad(obj); 
             }
 
+            objectPool.Initialize(coinPrefab, coinPrefab.GetComponent<PoolSize>().poolSize);
 
+
+            // TotalScore = PlayerPrefs.GetInt("TotalScore", 0);
         }
         else
         {
@@ -48,20 +46,20 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-
     void Start()
     {
-        Debug.Log("GameManager.Start()");
-        if (Instance == null)
+
+        objectPool = FindObjectOfType<ObjectPool>();
+        if (objectPool == null)
         {
-            score = 0;
-            UpdateScoreText();
+            Debug.LogError("ObjectPool не найден в Start()!");
         }
+        score = 0;
+        UpdateScoreText(); 
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log("GameManager.OnSceneLoaded(): " + scene.name);
         scoreText = GameObject.FindWithTag("ScoreText")?.GetComponent<TextMeshProUGUI>();
         bulletText = GameObject.FindWithTag("BulletText")?.GetComponent<TextMeshProUGUI>();
         damageText = GameObject.FindWithTag("DamageText")?.GetComponent<TextMeshProUGUI>();
@@ -70,30 +68,36 @@ public class GameManager : MonoBehaviour
         if (bulletText == null) Debug.LogError("Bullet Text не найден!");
         if (damageText == null) Debug.LogError("Damage Text не найден!");
 
-        if (scene.buildIndex != 0)
-        { // Проверяем, что это не стартовая сцена.
-            PlayerShooting.bulletDamage = 1f; // Обнуляем только на следующих уровнях.
+        objectPool = FindObjectOfType<ObjectPool>(); // <--  Добавляем эту строку
+        if (objectPool == null)
+        {
+            Debug.LogError("ObjectPool не найден после загрузки сцены!");
         }
 
+        if (scene.name.StartsWith("Level"))
+        {
+            ResetLevelScore();
+            PlayerShooting.bulletDamage = 1f;
+        }
     }
 
     void OnDestroy()
     {
+        // PlayerPrefs.SetInt("TotalScore", TotalScore);
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     public void IncreaseScore(int amount)
     {
         score += amount;
+        // TotalScore += amount;
         UpdateScoreText();
     }
 
-    public void UpdateScoreText()
+    public void ResetLevelScore()
     {
-        if (scoreText != null)
-        {
-            scoreText.text = $"Монеты: {score}";
-        }
+        score = 0;
+        UpdateScoreText();
     }
 
     public void SpawnCoin(Vector3 position)
@@ -106,29 +110,33 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void SpawnBulletPickup(Vector3 position)
+    public void LoadResultsScene()
     {
-        GameObject pickup = objectPool.GetPooledObject(bulletPickupPrefab);
-        if (pickup != null)
+        SceneManager.LoadScene("ResultsScene");
+    }
+
+    public void UpdateScoreText()
+    {
+        if (scoreText != null)
         {
-            pickup.transform.position = position;
-            pickup.SetActive(true);
+            scoreText.text = $"Монеты: {score}"; 
         }
     }
 
-    public void SpawnFireRatePickup(Vector3 position)
+    public void LoadNextLevel()
     {
-        GameObject pickup = objectPool.GetPooledObject(fireRatePickupPrefab);
-        if (pickup != null)
-        {
-            pickup.transform.position = position;
-            pickup.SetActive(true);
-        }
-    }
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        int nextSceneIndex = currentSceneIndex + 1;
 
-    public void ResetScore()
-    {
-        score = 0;
-        UpdateScoreText();
+        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            // PlayerPrefs.SetInt("TotalScore", TotalScore);
+            SceneManager.LoadScene(nextSceneIndex);
+        }
+        else
+        {
+            Debug.Log("Поздравляем! Вы прошли все уровни!");
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 }

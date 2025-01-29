@@ -18,29 +18,29 @@ public class PlayerShooting : MonoBehaviour
     public int bullets = 15;
     public TextMeshProUGUI bulletText;
 
-    public static float bulletDamage = 1f; // Static variable for damage
-    public TextMeshProUGUI damageText;     // Text to display damage
+    public static float bulletDamage = 1f;
+    public TextMeshProUGUI damageText;
 
-    private GameManager gameManager; // Кешированная ссылка на GameManager
+    private bool damageMultiplierAppliedThisFrame = false;
+    private bool fireRatePickupCollectedThisFrame = false;
 
+    void Update()
+    {
+        damageMultiplierAppliedThisFrame = false;
+        fireRatePickupCollectedThisFrame = false;
+    }
 
     void Awake()
     {
         playerInput = new PlayerInput();
         fireAction = playerInput.Player.Fire;
         fireAction.Enable();
-
-        gameManager = FindObjectOfType<GameManager>(true); // Кешируем GameManager
-        if (gameManager == null)
-        {
-            Debug.LogError("GameManager не найден!");
-        }
     }
 
     void Start()
     {
         UpdateBulletText();
-        UpdateDamageText(); 
+        UpdateDamageText();
     }
 
     void FixedUpdate()
@@ -102,24 +102,23 @@ public class PlayerShooting : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-
-        if (other.CompareTag("FireRatePickup"))
+        if (other.CompareTag("FireRatePickup") && !fireRatePickupCollectedThisFrame)
         {
             fireRate -= 0.05f;
             fireRate = Mathf.Max(0.1f, fireRate);
-            Debug.Log("Fire Rate: " + fireRate);
-
-            Destroy(other.gameObject); // Уничтожаем объект напрямую
+            fireRatePickupCollectedThisFrame = true;
+            Destroy(other.gameObject); // Уничтожаем объект после подбора
         }
         else if (other.CompareTag("BulletPickup"))
         {
             AddBullets(10);
-            Destroy(other.gameObject); // Теперь уничтожаем объект
+            Destroy(other.gameObject); // Уничтожаем объект после подбора
         }
 
-        if (other.CompareTag("DamageMultiplier"))
+        if (other.CompareTag("DamageMultiplier") && !damageMultiplierAppliedThisFrame) 
         {
             bulletDamage *= 2;
+            damageMultiplierAppliedThisFrame = true; // Устанавливаем флаг
             Destroy(other.gameObject);
         }
         else if (other.CompareTag("DamageDivider"))

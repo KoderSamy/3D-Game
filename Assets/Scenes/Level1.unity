@@ -3719,6 +3719,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b9af642d3ecc834e84606a25aac79b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2040960310 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3424407777522377334, guid: 0e63f6b8187068c48a95b7bed14ed4c6, type: 3}
+  m_PrefabInstance: {fileID: 7787123269884111607}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2043602188
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4081,6 +4092,10 @@ PrefabInstance:
       propertyPath: buyPassButton
       value: 
       objectReference: {fileID: 617425960}
+    - target: {fileID: 7924676069660304367, guid: 2c992882284666840bc0bbbc782d0222, type: 3}
+      propertyPath: restartButton
+      value: 
+      objectReference: {fileID: 2040960310}
     - target: {fileID: 7924676069660304367, guid: 2c992882284666840bc0bbbc782d0222, type: 3}
       propertyPath: levelCompleteUI
       value: 

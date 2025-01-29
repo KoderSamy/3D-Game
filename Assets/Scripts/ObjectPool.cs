@@ -4,6 +4,13 @@ using UnityEngine;
 public class ObjectPool : MonoBehaviour
 {
     private Dictionary<GameObject, List<GameObject>> pools = new Dictionary<GameObject, List<GameObject>>();
+    public static ObjectPool Instance { get; private set; }
+
+    void Awake()
+    {
+        Instance = this;
+        // DontDestroyOnLoad(gameObject);
+    }
 
     public void Initialize(GameObject prefab, int size)
     {
@@ -56,5 +63,8 @@ public class ObjectPool : MonoBehaviour
     public void ReturnObject(GameObject obj)
     {
         obj.SetActive(false);
+        // При необходимости сбросьте позицию и другие параметры объекта
+        obj.transform.position = Vector3.zero; // Или другое начальное положение
+        // ... другие действия по сбросу ...
     }
 }
